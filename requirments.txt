@@ -1,0 +1,6 @@
+Flask
+Flask-OAuthlib
+Flask-Session
+requests
+python-dotenv
+flask-cors

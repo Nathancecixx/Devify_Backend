@@ -1,0 +1,31 @@
+{
+    "gaming_community": {
+        "channels": [
+            {"name": "general", "type": "text"},
+            {"name": "announcements", "type": "text"},
+            {"name": "voice-chat", "type": "voice"}
+        ],
+        "roles": [
+            {"name": "Admin", "permissions": "administrator"},
+            {"name": "Member", "permissions": "read_messages,send_messages"}
+        ],
+        "categories": [
+            {"name": "Text Channels", "channels": ["general", "announcements"]},
+            {"name": "Voice Channels", "channels": ["voice-chat"]}
+        ]
+    },
+    "study_group": {
+        "channels": [
+            {"name": "homework-help", "type": "text"},
+            {"name": "study-voice", "type": "voice"}
+        ],
+        "roles": [
+            {"name": "Student", "permissions": "read_messages,send_messages"},
+            {"name": "Teacher", "permissions": "administrator"}
+        ],
+        "categories": [
+            {"name": "Study Channels", "channels": ["homework-help"]},
+            {"name": "Voice Channels", "channels": ["study-voice"]}
+        ]
+    }
+}
