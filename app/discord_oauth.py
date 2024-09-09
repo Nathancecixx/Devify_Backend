@@ -2,10 +2,16 @@ import requests
 from flask import session, redirect, request, url_for, jsonify
 from app import app
 
+
+FRONT_END = 'http://localhost:3000'
+SERVER_LIST = '/server-list'
+
+
 DISCORD_OAUTH_URL = 'https://discord.com/api/oauth2/authorize'
 DISCORD_TOKEN_URL = 'https://discord.com/api/oauth2/token'
 DISCORD_API_BASE_URL = 'https://discord.com/api/v10'
 DISCORD_SCOPE = 'identify email guilds'
+
 
 @app.route('/login')
 def login():
@@ -15,8 +21,13 @@ def login():
     )
     return redirect(discord_login_url)
 
+
 @app.route('/callback')
 def callback():
+    if 'code' not in request.args:
+        print('Login cancelled...')
+        return redirect(FRONT_END)
+
     code = request.args['code']
     data = {
         'client_id': app.config['DISCORD_CLIENT_ID'],
@@ -26,18 +37,21 @@ def callback():
         'redirect_uri': app.config['DISCORD_REDIRECT_URI'],
         'scope': DISCORD_SCOPE
     }
+
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     response = requests.post(DISCORD_TOKEN_URL, data=data, headers=headers)
     response_data = response.json()
 
     if 'access_token' in response_data:
         session['discord_token'] = response_data['access_token']
-        return redirect('http://localhost:3000/server-list')
+        return redirect(f'{FRONT_END}{SERVER_LIST}')
     else: 
         redirect(url_for('login'))
+
 
 @app.route('/logout')
 def logout():
     session.clear()
 
-    return redirect('http://localhost:3000')
+    return redirect(FRONT_END)
+

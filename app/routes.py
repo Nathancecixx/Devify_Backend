@@ -3,7 +3,9 @@ from flask import session, jsonify, request, redirect, url_for
 from app import app
 import json
 
+
 DISCORD_API_BASE_URL = 'https://discord.com/api/v10'
+
 
 @app.route('/api/servers', methods=['GET'])
 def get_user_servers():
@@ -41,6 +43,9 @@ def get_server_info(guild_id):
     
     # Fetch server info
     response = requests.get(f"{DISCORD_API_BASE_URL}/guilds/{guild_id}", headers=headers)
+
+    guild_info = response.json()
+
     if response.status_code == 401:
         print("Unauthorized request. Check the token and headers.")
         print(f"Server: {guild_id}")
@@ -49,7 +54,7 @@ def get_server_info(guild_id):
     elif response.status_code != 200:
         return jsonify({"error": "Failed to fetch guild information"}), guild_info.status_code
 
-    guild_info = response.json()
+
     guild_info['bot_in_server'] = bot_in_server
 
     print(guild_info)
@@ -80,6 +85,7 @@ def is_bot_in_guild(guild_id):
 
     return response.status_code == 200
 
+
 @app.route('/api/add-bot', methods=['POST'])
 def add_bot_to_server():
     """Adds the bot to the specified server by ID."""
@@ -101,6 +107,7 @@ def add_bot_to_server():
     )
 
     return jsonify({"invite_url": invite_url})
+
 
 @app.route('/api/remove-bot', methods=['POST'])
 def remove_bot_from_server():
@@ -129,6 +136,7 @@ def remove_bot_from_server():
         print(f"Response content: {response.content}")
         return jsonify({"error": "Failed to leave the server", "details": response.json()}), response.status_code
 
+
 @app.route('/api/templates', methods=['GET'])
 def get_templates():
     """Returns a list of available server templates."""
@@ -136,6 +144,7 @@ def get_templates():
     with open("app/Templates.json", "r") as f:
         templates = json.load(f)
     return jsonify(templates)
+
 
 @app.route('/api/apply-template', methods=['POST'])
 def apply_template():
@@ -163,6 +172,7 @@ def apply_template():
 
     return jsonify({"message": "Template applied successfully"})
 
+
 PERMISSION_MAP = {
     "administrator": 0x8,  # Administrator permission
     "read_messages": 0x400,  # Read Messages permission
@@ -170,12 +180,14 @@ PERMISSION_MAP = {
     # Add more mappings as needed
 }
 
+
 def convert_permissions(permissions_string):
     permissions = 0
     for perm in permissions_string.split(','):
         perm = perm.strip()
         permissions |= PERMISSION_MAP.get(perm, 0)
     return permissions
+
 
 def clear_guild(guild_id):
     """Clears all roles, channels, and categories in the specified guild."""
@@ -188,7 +200,7 @@ def clear_guild(guild_id):
         channels = channels_response.json()
         for channel in channels:
             delete_response = requests.delete(f"https://discord.com/api/v10/channels/{channel['id']}", headers=headers)
-            if delete_response.status_code == 204:
+            if delete_response.status_code == 200:
                 print(f"Successfully deleted channel {channel['name']}")
             else:
                 print(f"Failed to delete channel {channel['name']}: {delete_response.json()}")
@@ -201,8 +213,9 @@ def clear_guild(guild_id):
         roles = roles_response.json()
         for role in roles:
             # Skip the @everyone role
-            if role["name"] == "@everyone":
+            if role["name"] == "@everyone" or role["name"] == "Devify":
                 continue
+
             delete_response = requests.delete(f"https://discord.com/api/v10/guilds/{guild_id}/roles/{role['id']}", headers=headers)
             if delete_response.status_code == 204:
                 print(f"Successfully deleted role {role['name']}")
@@ -212,6 +225,7 @@ def clear_guild(guild_id):
         print(f"Failed to retrieve roles: {roles_response.json()}")
 
     print(f"Cleared all roles, channels, and categories in guild {guild_id}.")
+
 
 def apply_template_to_guild(guild_id, template):
     """Applies a template to the specified guild."""
@@ -229,7 +243,7 @@ def apply_template_to_guild(guild_id, template):
             "permissions": convert_permissions(role["permissions"])
         }
         response = requests.post(f"https://discord.com/api/v10/guilds/{guild_id}/roles", json=payload, headers=headers)
-        if response.status_code == 201:
+        if response.status_code == 200:
             role_data = response.json()
             role_ids[role["name"]] = role_data["id"]
             print(f"Successfully created role {role['name']} with ID {role_data['id']}")
@@ -269,3 +283,4 @@ def apply_template_to_guild(guild_id, template):
             print(f"Successfully created channel {channel['name']}")
         else:
             print(f"Failed to create channel {channel['name']}:", response.json())
+
