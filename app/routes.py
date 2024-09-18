@@ -1,5 +1,7 @@
 import requests
 from flask import session, jsonify, request, redirect, url_for
+from functools import lru_cache
+from cachetools import  TTLCache, cached
 from app import app
 import json
 
@@ -13,11 +15,7 @@ def get_user_servers():
     if 'discord_token' not in session:
         return redirect(url_for('login'))
 
-    headers = {
-        'Authorization': f"Bearer {session['discord_token']}"
-    }
-    user_guilds = requests.get(f"{DISCORD_API_BASE_URL}/users/@me/guilds", headers=headers).json()
-
+    user_guilds = get_cached_guilds(session['discord_token'])
     print("Logged in with token: ", session.get('discord_token'))
     owned_guilds = []
     for guild in user_guilds:
@@ -26,6 +24,18 @@ def get_user_servers():
             owned_guilds.append(guild)
 
     return jsonify({"owned_guilds": owned_guilds})
+
+#Middle-ware function to cache results for 10 mins
+@cached(cache=TTLCache(maxsize=100, ttl=600))
+def get_cached_guilds(token):
+    return get_guilds(token)
+
+def get_guilds(token):
+    headers = {
+        'Authorization': f"Bearer {token}"
+    }
+    return requests.get(f"{DISCORD_API_BASE_URL}/users/@me/guilds", headers=headers).json()
+
 
 
 @app.route('/api/servers/<guild_id>', methods=['GET'])
@@ -62,6 +72,7 @@ def get_server_info(guild_id):
     return jsonify(guild_info)
 
 
+@lru_cache(maxsize=1)
 def get_bot_user_id():
     """Fetch the bot's user ID."""
     bot_token = app.config['DISCORD_BOT_TOKEN']

@@ -4,3 +4,4 @@ Flask-Session
 requests
 python-dotenv
 flask-cors
+cachetools-5.5.0
